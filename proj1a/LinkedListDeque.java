@@ -1,5 +1,4 @@
 public class LinkedListDeque<T> {
-
     private class IntNode {
         T item;
         IntNode pre;
@@ -10,31 +9,31 @@ public class LinkedListDeque<T> {
             next = n;
         }
     }
-
-    public IntNode sentinel;
-    public int size;
-
-    /* Create empty deque */
+    /* Invariant:
+     * The lasItem.next always pointing at sentinel?? why, to do what
+     * The sentinel.next is the first item of deque
+     * The sentinel.pre is the last item of deque */
+    private IntNode sentinel;
+    private int size;
+    /* List constructors */
     public LinkedListDeque() {
         sentinel = new IntNode( null, null, null);
-        sentinel.next = sentinel;
-        sentinel.pre = sentinel;
+        sentinel.next = sentinel;  // why
+        sentinel.pre = sentinel.next;
         size = 0;
     }
-    /* Invariant: The first item of deque starting at sentinel.next
-    * The lasItem.next always pointing at sentinel
-    * And the sentinel.pre is the last item of deque */
+
     public LinkedListDeque(T item) {
         sentinel = new IntNode(null, null, null);
         sentinel.next = new IntNode(item, sentinel, sentinel);
         sentinel.pre = sentinel.next;
         size = 1;
     }
-    /* Create a deep copy of other */
+    /* Constructor which creates a deep copy of other */
     public LinkedListDeque(LinkedListDeque<T> other) {
         sentinel = new IntNode( null, null, null);
         sentinel.next = sentinel;
-        sentinel.pre = sentinel;
+        sentinel.pre = sentinel.next;
         size = 0;
         for (int i = 0; i < other.size(); i++) {
             addLast(other.get(i));
@@ -42,38 +41,36 @@ public class LinkedListDeque<T> {
 
     }
     /* Add an item to the front of the deque
-    *  Add to the front not make lastItem change, but the first time add first to empty deque*/
+    *  Add to the front not make lastItem change,
+    * but the first time to addFirst to empty deque that the first is the last */
+
     public void addFirst(T item) {
         sentinel.next = new IntNode(item, sentinel, sentinel.next);
-        sentinel.next.next.pre = sentinel.next;  // The IntNode following of the first IntNode (or sentinel.next) has pre field pointing at the first IntNode
         size++;
-        /* Very magic, we don't need block code below anymore */
-//        if (size == 1) {
-//            sentinel.pre = sentinel.next;  // In this case when size == 1, sentinel.next.next point at sentinel
-//        }
+        sentinel.next.next.pre = sentinel.next;  // After addFirst, oldFirst.pre = newFirst
+
     }
     /* Add an item to the end of the deque */
     public void addLast(T item) {
         sentinel.pre = new IntNode(item, sentinel.pre, sentinel);
-        sentinel.pre.pre.next = sentinel.pre; // The IntNode front of the last IntNode (or sentinel.pre) has next field pointing at the last IntNode
+        sentinel.pre.pre.next = sentinel.pre; // After addLast x, then oldLast.next = newLast
         size++;
     }
-    /* Return true if deque is empty, false otherwise */
-    public boolean isEmpty() {
-        return size == 0;
-    }
+
     /* Return the number of items in the deque */
     public int size() {
         return size;
     }
+
+    /* Return true if deque is empty, false otherwise */
+    public boolean isEmpty() {
+        return this.size() == 0;
+    }
+
     /* Print all items in deque in order, separated by a space, and a new line at the end*/
     public void printDeque() {
-        IntNode p = sentinel.next;
-        int i = size;
-        while (i != 0) {
-            System.out.print(p.item + " ");
-            p = p.next;
-            i--;  // Non-destructure size
+        for (IntNode p = sentinel.next; p != sentinel; p = p.next) {
+            System.out.println(p.item);
         }
         System.out.println();
     }
@@ -83,7 +80,11 @@ public class LinkedListDeque<T> {
             return null;
         }
         T frontRemove = sentinel.next.item;
-        sentinel.next = sentinel.next.next;
+        IntNode temp = sentinel.next.next;
+        temp.pre = sentinel;
+        sentinel.next.next = null;
+        sentinel.next.pre = null;
+        sentinel.next = temp;
         size--;
         return frontRemove;
     }
@@ -93,7 +94,11 @@ public class LinkedListDeque<T> {
             return null;
         }
         T backRemove = sentinel.pre.item;
-        sentinel.pre = sentinel.pre.pre;
+        IntNode temp = sentinel.pre.pre;
+        temp.next = sentinel;
+        sentinel.pre.next = null;
+        sentinel.pre.pre = null;
+        sentinel.pre = temp;
         size--;
         return backRemove;
     }
@@ -145,38 +150,14 @@ public class LinkedListDeque<T> {
         return getRecursive(temp, index);
 
     }
-    public static void main(String[] args) {
-        LinkedListDeque<Integer> lld = new LinkedListDeque<>();
-        lld.addFirst(2);
-        lld.addLast(77);
-        lld.addFirst(3);
-        lld.addFirst(99);
-        lld.addLast(1);  // 99 3 2 77 1
-//        lld.addFirst("a");
-//        lld.addFirst("b");
-//        lld.addFirst("c");
-//        lld.addFirst("d");
-//        lld.addFirst("e");
 
-//        for (int i = 0; i < lld.size(); i++) {
-//            System.out.println(lld.get(i));
-//        }
-//        System.out.println(lld.removeFirst());
-//        System.out.println(lld.removeLast());
-//        System.out.println(lld.removeLast());
-//        System.out.println(lld.removeFirst());
-//        System.out.println(lld.removeFirst());
-//        System.out.println(lld.removeFirst());
-//
-//        System.out.println(lld.size());
-        LinkedListDeque<Integer> copyLLD = new LinkedListDeque<>(lld);
-        for (int i = 0; i < copyLLD.size(); i++) {
-            System.out.println(copyLLD.get(i));
+    public static void main(String[] args) {
+        LinkedListDeque<Integer> test = new LinkedListDeque<>(7);
+        test.addLast(-8);
+        test.addFirst(5);
+        test.removeLast();
+        for (int i = 0; i < test.size(); i++) {
+            System.out.println(test.getRecursive(i));
         }
-        copyLLD.addFirst(75);
-        System.out.println(copyLLD.get(0));
-        System.out.println(copyLLD.size());
-        System.out.println(lld.get(0));
-        System.out.println(lld.size());
     }
 }
