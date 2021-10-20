@@ -29,6 +29,7 @@ public class LinkedListDequeTest {
 		}
 	}
 
+
 	/** Adds a few things to the list, checking isEmpty() and size() are correct, 
 	  * finally printing the results. 
 	  *
@@ -89,4 +90,4 @@ public class LinkedListDequeTest {
 		addIsEmptySizeTest();
 		addRemoveTest();
 	}
-} 
+}
