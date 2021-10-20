@@ -58,7 +58,8 @@ public class ArrayDeque<T>{
 
     /* Resize ArrayDeque smaller when special amount of times remove*/
     public void resizeSmaller() {
-        int r = size / items.length;  // The required lowest rate size of deque and length of array is 0.25
+        float r = (float) size / items.length;  // The required lowest rate size of deque and length of array is 0.25
+        // Divide, int r is very a danger bug
         if (items.length >= 16 && r < 0.25) {
             T[] newItems = (T[]) new Object[items.length / 2];  // length of array has half left
             newArray(newItems);
