@@ -2,103 +2,114 @@ package hw2;
 
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 import org.junit.Assert;
+import edu.princeton.cs.algs4.In;
 
 public class Percolation {
     private boolean blocked = true;
-    private boolean[] gridTo1D;
-    private int lenEdgeGrid;
+    private boolean[][] grid;
     private WeightedQuickUnionUF uf;
     private int countOpen;  // Number of opened sites
+
     // Create N-by-N grid, with all sites initially blocked
     // Throw a java.lang.IllegalArgumentException if N ≤ 0
     public Percolation(int N) {
-        if (N < 0){
+        if (N < 0) {
             throw new IllegalArgumentException();
         }
-        lenEdgeGrid = N;
-        gridTo1D = new boolean[lenEdgeGrid * lenEdgeGrid];
+        grid = new boolean[N][N];
         // All sites initially blocked
-        for (int i = 0; i < gridTo1D.length; i++) {
-            gridTo1D[i] = blocked;
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid.length; j++) {
+                grid[i][j] = blocked;
+            }
         }
-        uf = new WeightedQuickUnionUF(lenEdgeGrid * lenEdgeGrid);
+        uf = new WeightedQuickUnionUF(N * N);
         countOpen = 0;
     }
 
     /* Throw a java.lang.IndexOutOfBoundsException
     if row or column index is out of range 0 and N − 1 */
-    private void validateRowCol (int r, int c) {
-        if ((r < 0 || r >= lenEdgeGrid) || (c < 0 || c >= lenEdgeGrid)) {
+    private void validateRowCol(int r, int c) {
+        if ((r < 0 || r >= grid.length) || (c < 0 || c >= grid.length)) {
             throw new IndexOutOfBoundsException();
         }
     }
-    // Create array contains row and column coordinates
-    // Turn row and col in the grid into index in array respectively
+
+    // Turn row and col in the grid into index in an array respectively
     private int xyTo1D(int row, int col) {
-        return row * lenEdgeGrid + col;
+        return row * grid.length + col;
     }
 
     // Open the site (row, col) if it is not open already
     public void open(int row, int col) {
         validateRowCol(row, col);
-        int i = xyTo1D(row, col);
-        gridTo1D[i] = !blocked;
+        if (grid[row][col] != blocked) {  // Not count open if it already open
+            return;
+        }
+
+        grid[row][col] = !blocked;
         countOpen++;
+
+        /* Union next to the site in left, right, top or bottom */
+        int i = xyTo1D(row, col);  // row and column coordinates
+        /* Very dangerous when calculating directly on row and col,
+        unwanted row or col in the next union */
+        /* Change while into if */
+
         // Không ở biên phải grid
-        while (col != lenEdgeGrid - 1) {
+        if (col != grid.length - 1) {
             // Nếu ô bên phải liền kề open thì union 2 ô
-            if (gridTo1D[i + 1] == blocked) {
-                break;
+            if (grid[row][col + 1] != blocked) {
+                uf.union(i, i + 1);
             }
-            uf.union(i, i + 1);
-            i = i + 1;
-            col = col + 1;
+//            i = i + 1;
+//            col = col + 1;
         }
+
         // Không ở biên trái grid
-        while (col != 0) {
+        if (col != 0) {
             // Nếu ô bên trái liên kề open thì union 2 ô
-            if (gridTo1D[i - 1] == blocked) {
-                break;
+            if (grid[row][col - 1] != blocked) {
+                uf.union(i, i - 1);
             }
-            uf.union(i, i - 1);
-            i = i - 1;
-            col = col - 1;
+//            i = i - 1;
+//            col = col - 1;
         }
+
         // Không ở biên trên grid
-        while (row != 0) {
+        if (row != 0) {
             // Nếu ô bên trên liền kề open thì union 2 ô
-            if (gridTo1D[i - lenEdgeGrid] == blocked) {
-                break;
+            if (grid[row - 1][col] != blocked) {
+                uf.union(i, i - grid.length);
             }
-            uf.union(i, i - lenEdgeGrid);
-            i = i - lenEdgeGrid;
-            row = row - 1;
+//            i = i - grid.length;
+//            row = row - 1;
         }
+
         // Không ở biên dưới grid
-        while (row != lenEdgeGrid - 1) {
+        if (row != grid.length - 1) {
             // Nếu ô bên dưới liền kề open thì union 2 ô
-            if (gridTo1D[i + lenEdgeGrid] == blocked) {
-                break;
+            if (grid[row + 1][col] != blocked) {
+                uf.union(i, i + grid.length);
             }
-            uf.union(i, i + lenEdgeGrid);
-            i = i + lenEdgeGrid;
-            row = row + 1;
+//            i = i + grid.length;
+//            row = row + 1;
         }
     }
 
     // Is the site (row, col) open?
     public boolean isOpen(int row, int col) {
         validateRowCol(row, col);
-        int i = xyTo1D(row, col);
-        return gridTo1D[i] != blocked;
+        return grid[row][col] != blocked;
     }
 
     // Is the site (row, col) full?
     public boolean isFull(int row, int col) {
         validateRowCol(row, col);
         int i = xyTo1D(row, col);
-        for (int j = 0; j < lenEdgeGrid; j++) {
-            if (gridTo1D[j] != blocked) {
+        for (int c = 0; c < grid.length; c++) {
+            if (grid[0][c] != blocked) {
+                int j = xyTo1D(0, c);
                 if (uf.connected(j, i)) {
                     return true;
                 }
@@ -110,33 +121,30 @@ public class Percolation {
     // Number of open sites
     public int numberOfOpenSites() {
         return countOpen;
-
     }
 
     // Does the system percolate?
     public boolean percolates() {
-        for (int i = 0; i < lenEdgeGrid; i++) {
-            for (int j = gridTo1D.length - lenEdgeGrid; j < gridTo1D.length; j++) {
-                if (gridTo1D[i] != blocked && gridTo1D[j] != blocked) {
-                    if (uf.connected(i, j)) {
-                        return true;
-                    }
+        for (int c = 0; c < grid.length; c++) {
+            if (grid[grid.length - 1][c] != blocked) {  // Continute if a site in the bottom not open
+                if (isFull(grid.length - 1, c)) {
+                    return true;
                 }
             }
         }
         return false;
     }
     public static void main(String[] args) {
-        Percolation p = new Percolation(5);
-        p.open(3,4);  // union(14, 19)
-        p.open(2, 4);  // union(12, 13)
-        p.open(2, 2); // union(13, 14)
-        p.open(2, 3);  // union(2, 7)
-        p.open(0, 2);  // union(7, 12)
-        p.open(1, 2);
-        boolean actual = p.isFull(2, 2);
-        Assert.assertTrue(actual);
+        In in = new In(args[0]);
+        int n = in.readInt();
+        Percolation p = new Percolation(n);
+        while (!in.isEmpty()) {
+            int r = in.readInt();
+            int c = in.readInt();
+            p.open(r, c);
+        }
         Assert.assertTrue(p.percolates());
+
     }  // use for unit testing (not required, but keep this here for the autograder)
 
 }
